@@ -37,76 +37,42 @@ class Soulforge < Formula
   def install
     libexec.install Dir["*"]
 
+    # Gzip Mach-O files to hide from Homebrew's keg_relocate
     system "gzip", libexec/"soulforge"
     Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
       system "gzip", f
     end
 
+    # Wrapper scripts that install on first run.
+    # macOS App Management blocks Homebrew's post_install from writing to
+    # ~/.soulforge/ (created by a different process). Moving the install to
+    # first user-run avoids this — Terminal has the user's full permissions.
     (bin/"soulforge").write <<~SH
       #!/bin/bash
-      exec "$HOME/.soulforge/bin/soulforge" "$@"
+      CELLAR="$(cd "$(dirname "$0")/../libexec" 2>/dev/null && pwd)"
+      SF="$HOME/.soulforge/bin/soulforge"
+      if [ ! -x "$SF" ]; then
+        echo "Setting up SoulForge..." >&2
+        # Decompress if needed (first install or reinstall)
+        [ -f "$CELLAR/soulforge.gz" ] && gunzip "$CELLAR/soulforge.gz" && chmod +x "$CELLAR/soulforge"
+        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \\; 2>/dev/null
+        bash "$CELLAR/install.sh" --quiet
+      fi
+      exec "$SF" "$@"
     SH
     (bin/"sf").write <<~SH
       #!/bin/bash
-      exec "$HOME/.soulforge/bin/soulforge" "$@"
+      exec "$(dirname "$0")/soulforge" "$@"
     SH
     chmod 0755, bin/"soulforge"
     chmod 0755, bin/"sf"
   end
 
   def post_install
+    # Decompress Mach-O files so they're ready for install.sh on first run
     system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
     Dir.glob(libexec/"deps/native/**/*.gz").each { |f| system "gunzip", f }
     system "chmod", "+x", libexec/"soulforge"
-
-    # Inline bash — both install.sh and Ruby file ops fail silently
-    # under Homebrew's post_install context. bash -c works reliably.
-    system "bash", "-c", <<~SH
-      set -euo pipefail
-      SF="$HOME/.soulforge"
-      BIN="$SF/bin"
-      SRC="#{libexec}"
-
-      # macOS App Management blocks modifying files created by other processes.
-      # Clear quarantine attrs first, then remove.
-      [ -d "$SF" ] && xattr -cr "$SF" 2>/dev/null || true
-      rm -rf "$SF/bin" "$SF/installs" "$SF/wasm" "$SF/workers" "$SF/native" "$SF/opentui-assets" "$SF/init.lua" 2>/dev/null || true
-      mkdir -p "$BIN"
-
-      cp "$SRC/soulforge" "$BIN/soulforge"
-      chmod +x "$BIN/soulforge"
-      ln -sf "$BIN/soulforge" "$BIN/sf"
-
-      for tool in rg fd lazygit cli-proxy-api; do
-        cp "$SRC/deps/$tool" "$BIN/$tool"
-        chmod +x "$BIN/$tool"
-      done
-
-      mkdir -p "$SF/installs"
-      cp -r "$SRC/deps/nvim" "$SF/installs/nvim-bundled"
-      ln -sf "$SF/installs/nvim-bundled/bin/nvim" "$BIN/nvim"
-
-      mkdir -p "$SF/wasm" "$SF/workers"
-      cp "$SRC/deps/wasm/"*.wasm "$SF/wasm/"
-      cp "$SRC/deps/workers/"*.js "$SF/workers/"
-      [ -d "$SRC/deps/native" ] && cp -r "$SRC/deps/native" "$SF/native"
-      rm -rf "$SF/opentui-assets"
-      cp -r "$SRC/deps/opentui-assets" "$SF/opentui-assets"
-      cp "$SRC/deps/init.lua" "$SF/init.lua"
-
-      if [ "$(uname)" = "Darwin" ]; then
-        mkdir -p "$HOME/Library/Fonts"
-        cp "$SRC/deps/nerd-fonts/"*.ttf "$HOME/Library/Fonts/" 2>/dev/null || true
-        xattr -cr "$SF" 2>/dev/null || true
-      else
-        FONT_DIR="$HOME/.local/share/fonts"
-        mkdir -p "$FONT_DIR"
-        cp "$SRC/deps/nerd-fonts/"*.ttf "$FONT_DIR/" 2>/dev/null || true
-      fi
-
-      [ ! -f "$SF/config.json" ] && echo '{"nerdFont":true}' > "$SF/config.json"
-      true
-    SH
   end
 
   def caveats
