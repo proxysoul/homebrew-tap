@@ -29,11 +29,15 @@ class Soulforge < Formula
     end
   end
 
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
   def install
     libexec.install Dir["*"]
 
     # Gzip ALL Mach-O files so Homebrew's keg_relocate can't detect them.
-    # It scans by magic bytes, not extension — renaming alone doesn't work.
     system "gzip", libexec/"soulforge"
     Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
       system "gzip", f
@@ -52,10 +56,66 @@ class Soulforge < Formula
   end
 
   def post_install
+    # Decompress Mach-O files hidden from keg_relocate
     system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
     Dir.glob(libexec/"deps/native/**/*.gz").each { |f| system "gunzip", f }
     system "chmod", "+x", libexec/"soulforge"
-    system "#{libexec}/install.sh", "--quiet"
+
+    # Install directly in Ruby — install.sh fails under Homebrew's system()
+    # despite working perfectly when run manually (likely env/signal differences).
+    sf = Pathname.new(Dir.home)/".soulforge"
+    sf_bin = sf/"bin"
+
+    # Clean previous install (preserve config, sessions, DBs)
+    %w[bin installs wasm workers native opentui-assets init.lua].each do |d|
+      rm_rf sf/d
+    end
+
+    sf_bin.mkpath
+
+    # Main binary + symlink
+    cp libexec/"soulforge", sf_bin/"soulforge"
+    chmod 0755, sf_bin/"soulforge"
+    ln_sf sf_bin/"soulforge", sf_bin/"sf"
+
+    # CLI tools
+    %w[rg fd lazygit cli-proxy-api].each do |tool|
+      cp libexec/"deps"/tool, sf_bin/tool
+      chmod 0755, sf_bin/tool
+    end
+
+    # Neovim
+    nvim_dir = sf/"installs"/"nvim-bundled"
+    (sf/"installs").mkpath
+    cp_r libexec/"deps"/"nvim", nvim_dir
+    ln_sf nvim_dir/"bin"/"nvim", sf_bin/"nvim"
+
+    # Tree-sitter WASMs, workers, native addons, assets
+    (sf/"wasm").mkpath
+    (sf/"workers").mkpath
+    cp Dir[libexec/"deps"/"wasm"/"*.wasm"], sf/"wasm"
+    cp Dir[libexec/"deps"/"workers"/"*.js"], sf/"workers"
+    cp_r libexec/"deps"/"native", sf/"native" if (libexec/"deps"/"native").exist?
+    cp_r libexec/"deps"/"opentui-assets", sf/"opentui-assets"
+    cp libexec/"deps"/"init.lua", sf/"init.lua"
+
+    # Nerd fonts
+    font_dir = if OS.mac?
+      Pathname.new(Dir.home)/"Library"/"Fonts"
+    else
+      Pathname.new(Dir.home)/".local"/"share"/"fonts"
+    end
+    font_dir.mkpath
+    Dir[libexec/"deps"/"nerd-fonts"/"*.ttf"].each { |f| cp f, font_dir rescue nil }
+
+    # Remove quarantine on macOS
+    system "xattr", "-cr", sf if OS.mac?
+
+    # Ensure nerdFont config
+    config = sf/"config.json"
+    unless config.exist?
+      config.write('{"nerdFont":true}')
+    end
   end
 
   def caveats
