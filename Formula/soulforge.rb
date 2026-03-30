@@ -29,6 +29,11 @@ class Soulforge < Formula
     end
   end
 
+  livecheck do
+    url :stable
+    strategy :github_latest
+  end
+
   def install
     # Stage everything in libexec — install phase runs in a sandbox
     # where HOME is a temp dir, so we can't write to ~/.soulforge/ here
