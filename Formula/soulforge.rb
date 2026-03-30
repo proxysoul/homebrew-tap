@@ -4,39 +4,36 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.3.8"
+  version "1.4.0"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "0c53663a7a3f46a71c81272494a8dd40ba852f3fa6f12a5b17721239f16aad49"
+      sha256 "6e3a18c5563e1b5d946578d28f7fb53711949428fb982acbb8c86f855fc60db7"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "2ab75c5d320d1692d25bfbd23c2dbe1e5a27512eb20dea38c3bc260a2cfbbce2"
+      sha256 "64f78f137afac29b87f371990a28f68b92075e8a27abef4087fb27d02abd9787"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "58b97e28fdb4de0558df9668216fca25cc90a01891fb1741866ad67348cb1a82"
+      sha256 "9f2671f2150e3b297dc1820c99c2e47e8c00c3c69e2919c92eb771ab97095b36"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "15fcca769504630cd392029dc404ae9935033cc828995cf86a57e862a5d69012"
+      sha256 "bc86fd9812b09e277843afbd77618a67275e48f3077732b370087e0840a0515f"
     end
-  end
-
-  livecheck do
-    url :stable
-    strategy :github_latest
   end
 
   def install
     libexec.install Dir["*"]
 
+    # Gzip ALL Mach-O files so Homebrew's keg_relocate can't detect them.
+    # It scans by magic bytes, not extension — renaming alone doesn't work.
     system "gzip", libexec/"soulforge"
     Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
       system "gzip", f
@@ -44,7 +41,8 @@ class Soulforge < Formula
 
     # First-run wrapper: macOS App Management blocks Homebrew's
     # post_install from writing to ~/.soulforge/. The wrapper runs
-    # install.sh on first invocation from the user's Terminal.
+    # install.sh on first invocation when the USER runs Terminal
+    # (which has full permissions).
     (bin/"soulforge").write <<~SH
       #!/bin/bash
       SF="$HOME/.soulforge/bin/soulforge"
@@ -63,6 +61,7 @@ class Soulforge < Formula
   end
 
   def post_install
+    # Only decompress — actual install happens on first user run
     system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
     Dir.glob(libexec/"deps/native/**/*.gz").each { |f| system "gunzip", f }
     system "chmod", "+x", libexec/"soulforge"
