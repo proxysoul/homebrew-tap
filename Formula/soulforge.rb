@@ -34,21 +34,33 @@ class Soulforge < Formula
     # where HOME is a temp dir, so we can't write to ~/.soulforge/ here
     libexec.install Dir["*"]
 
-    # Wrapper scripts use /home/runner (shell expansion at runtime, not Ruby
-    # interpolation at install time) so they resolve to the real home dir
+    # Rename native Mach-O addons (.node, .dylib, .so) so Homebrew's
+    # keg_relocate pass doesn't try to rewrite their dylib IDs/rpaths.
+    # The header padding in these files is too small for Homebrew's
+    # absolute paths, causing "Updated load commands do not fit" errors.
+    # Restored in post_install before running install.sh.
+    Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
+      File.rename(f, "#{f}.brew-hide")
+    end
+
+    # Wrapper scripts — $HOME expands at runtime, not install time
     (bin/"soulforge").write <<~SH
       #!/bin/bash
-      exec "/home/runner/.soulforge/bin/soulforge" ""
+      exec "$HOME/.soulforge/bin/soulforge" "$@"
     SH
     (bin/"sf").write <<~SH
       #!/bin/bash
-      exec "/home/runner/.soulforge/bin/soulforge" ""
+      exec "$HOME/.soulforge/bin/soulforge" "$@"
     SH
     chmod 0755, bin/"soulforge"
     chmod 0755, bin/"sf"
   end
 
   def post_install
+    # Restore native addons hidden from Homebrew's dylib relinking
+    Dir.glob(libexec/"deps/native/**/*.brew-hide").each do |f|
+      File.rename(f, f.sub(/\.brew-hide$/, ""))
+    end
     # post_install runs outside the sandbox with the real HOME
     system "#{libexec}/install.sh", "--quiet"
   end
