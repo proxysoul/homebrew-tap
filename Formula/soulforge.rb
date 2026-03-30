@@ -4,51 +4,59 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.3.0"
+  version "1.3.1"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "c6846cdb92b16e31193cd34afb4b3fb72dfbe6cb658b358ad7d2710c47e17cf8"
+      sha256 "91ef9c566836c6317f1e394764e8d259683d359f11279d44de65012e0b78ff70"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "43cd7421845bce1879d754850b1af0a9ab0f1fea535f5e0dd2bb6bfc67e18445"
+      sha256 "572256fd0d27aba9ba061ff62ed8a13fd24ec35e86b248e658edc5d329010b8d"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "04222cf271c5482552c12ff4cc004bf0ef92cc51a4f792e7aa38f7d74df157c7"
+      sha256 "8d6a13e7583642f42627ae01bc041def8c8d49c4e4a4861a72990dd8c618b358"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "b138c46138b3c63b16710d7e513648bf3986085a208fb9edba8790060d4c5bbf"
+      sha256 "42760d7a5278870e8e23d6ea6e7a28b39b1ac08ce00dc2fe05d61db1adf3f342"
     end
   end
 
   def install
-    system "./install.sh", "--quiet"
-    # Create wrapper scripts instead of symlinks — symlinks to ~/.soulforge/
-    # fail because brew validates targets during link phase
+    # Stage everything in libexec — install phase runs in a sandbox
+    # where HOME is a temp dir, so we can't write to ~/.soulforge/ here
+    libexec.install Dir["*"]
+
+    # Wrapper scripts use /home/runner (shell expansion at runtime, not Ruby
+    # interpolation at install time) so they resolve to the real home dir
     (bin/"soulforge").write <<~SH
       #!/bin/bash
-      exec "#{Dir.home}/.soulforge/bin/soulforge" ""
+      exec "/home/runner/.soulforge/bin/soulforge" ""
     SH
     (bin/"sf").write <<~SH
       #!/bin/bash
-      exec "#{Dir.home}/.soulforge/bin/soulforge" ""
+      exec "/home/runner/.soulforge/bin/soulforge" ""
     SH
     chmod 0755, bin/"soulforge"
     chmod 0755, bin/"sf"
   end
 
+  def post_install
+    # post_install runs outside the sandbox with the real HOME
+    system "#{libexec}/install.sh", "--quiet"
+  end
+
   def caveats
     <<~EOS
       SoulForge installed to ~/.soulforge/
-      Run 'soulforge' to start, or 'soulforge --help' for options.
+      Run 'soulforge' or 'sf' to start.
     EOS
   end
 
