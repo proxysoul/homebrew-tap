@@ -4,28 +4,28 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.3.2"
+  version "1.3.3"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "f3bfcc478a11a407185094d8cc734dd81f29b0729fe9f441d5a038cd530d61bd"
+      sha256 "ecb2df9f2a9b41549a7462b02cd9523e8db9a92bc7fafc95acc3c4f7ffd47bcf"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "b73df7d1dc46e61dc38276221cc725f09a4cfc1fe281b9fdb7e76bb470e9500a"
+      sha256 "f9eec66f11f80a48795e1155693fbb1b3dac9eed3c1c66f2d00e7e503e547878"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "29f029438e455ec27e6483a2d336a7dde278772e16c81afb7e96cbe1568570a5"
+      sha256 "f582f52b8361b750982169da9a9296ab91d4f6fc22a756f16e5d2742838622ee"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "233144b78002e85d829d249a749bc38f9d7b914a8a14cda585d2330a373491aa"
+      sha256 "710ba65971bd5ddf5847055989c2619b2504e3c4c9168d3300a7f6340930ff16"
     end
   end
 
@@ -43,7 +43,8 @@ class Soulforge < Formula
       File.rename(f, "#{f}.brew-hide")
     end
 
-    # Wrapper scripts — $HOME expands at runtime, not install time
+    # Wrapper scripts use /home/runner (shell expansion at runtime, not Ruby
+    # interpolation at install time) so they resolve to the real home dir
     (bin/"soulforge").write <<~SH
       #!/bin/bash
       exec "$HOME/.soulforge/bin/soulforge" "$@"
