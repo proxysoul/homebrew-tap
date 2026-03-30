@@ -35,21 +35,19 @@ class Soulforge < Formula
   end
 
   def install
-    # Stage everything in libexec — install phase runs in a sandbox
-    # where HOME is a temp dir, so we can't write to ~/.soulforge/ here
+    # Stage everything in libexec
     libexec.install Dir["*"]
 
-    # Rename native Mach-O addons (.node, .dylib, .so) so Homebrew's
-    # keg_relocate pass doesn't try to rewrite their dylib IDs/rpaths.
-    # The header padding in these files is too small for Homebrew's
-    # absolute paths, causing "Updated load commands do not fit" errors.
-    # Restored in post_install before running install.sh.
+    # Gzip ALL Mach-O files so Homebrew's keg_relocate can't detect them.
+    # It scans by magic bytes, not extension — renaming alone doesn't work.
+    # The compiled binary and native addons (.node, .dylib, .so) all have
+    # @rpath or internal headers that Homebrew tries to rewrite, corrupting them.
+    system "gzip", libexec/"soulforge"
     Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
-      File.rename(f, "#{f}.brew-hide")
+      system "gzip", f
     end
 
-    # Wrapper scripts use /home/runner (shell expansion at runtime, not Ruby
-    # interpolation at install time) so they resolve to the real home dir
+    # Wrapper scripts — $HOME/$@ expand at runtime
     (bin/"soulforge").write <<~SH
       #!/bin/bash
       exec "$HOME/.soulforge/bin/soulforge" "$@"
@@ -63,11 +61,13 @@ class Soulforge < Formula
   end
 
   def post_install
-    # Restore native addons hidden from Homebrew's dylib relinking
-    Dir.glob(libexec/"deps/native/**/*.brew-hide").each do |f|
-      File.rename(f, f.sub(/\.brew-hide$/, ""))
+    # Decompress Mach-O files hidden from Homebrew's keg_relocate
+    system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
+    Dir.glob(libexec/"deps/native/**/*.gz").each do |f|
+      system "gunzip", f
     end
-    # post_install runs outside the sandbox with the real HOME
+    system "chmod", "+x", libexec/"soulforge"
+    # Run install.sh to copy everything to ~/.soulforge/
     system "#{libexec}/install.sh", "--quiet"
   end
 
