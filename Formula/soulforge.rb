@@ -67,6 +67,9 @@ class Soulforge < Formula
       BIN="$SF/bin"
       SRC="#{libexec}"
 
+      # macOS App Management blocks modifying files created by other processes.
+      # Clear quarantine attrs first, then remove.
+      [ -d "$SF" ] && xattr -cr "$SF" 2>/dev/null || true
       rm -rf "$SF/bin" "$SF/installs" "$SF/wasm" "$SF/workers" "$SF/native" "$SF/opentui-assets" "$SF/init.lua" 2>/dev/null || true
       mkdir -p "$BIN"
 
