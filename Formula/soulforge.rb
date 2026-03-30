@@ -46,9 +46,11 @@ class Soulforge < Formula
     (bin/"soulforge").write <<~SH
       #!/bin/bash
       SF="$HOME/.soulforge/bin/soulforge"
-      if [ ! -x "$SF" ]; then
+      CELLAR="#{libexec}"
+      # Run install if binary missing or cellar has a newer version (upgrade)
+      if [ ! -x "$SF" ] || [ "$CELLAR/soulforge" -nt "$SF" ]; then
         echo "Setting up SoulForge..." >&2
-        bash "#{libexec}/install.sh" --quiet
+        bash "$CELLAR/install.sh" --quiet
       fi
       exec "$SF" "$@"
     SH
