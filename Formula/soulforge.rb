@@ -4,40 +4,36 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.3.6"
+  version "1.3.7"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "941e7e536bdfe3afc9698151c7d2c8316dce6f4b7f1a37d62d3b9bb8b94858a7"
+      sha256 "a74a0570217e67472071304a5fb0a698c863050850e05a130e0e797f50a046de"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "f80841fa9cac4b811ce0e9fc825e47be66f45c2afc7c745e8474f2e7412c9bb3"
+      sha256 "6880ba8b76f2a78fdf16dd45730ff7c850800e5961ff967fa92347b63553e80c"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "0c86283c2d15ed4e5d8d49025a0ed7d20b95ec646a83463c414264b68941185c"
+      sha256 "2e7b45ee169ab23c1cb708bb9e16f2e7da9bd781d4f55d93d03ce57d93e9b97e"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "74c36ab07f7a04db0d2456b4ca2d3b5e0015a1979f4b5710225dce06e4afa708"
+      sha256 "a7d251ace7e864414a8c6dae14d27b44edf5759b432c861935e7ae11587a368a"
     end
-  end
-
-  livecheck do
-    url :stable
-    strategy :github_latest
   end
 
   def install
     libexec.install Dir["*"]
 
     # Gzip ALL Mach-O files so Homebrew's keg_relocate can't detect them.
+    # It scans by magic bytes, not extension — renaming alone doesn't work.
     system "gzip", libexec/"soulforge"
     Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
       system "gzip", f
@@ -56,41 +52,29 @@ class Soulforge < Formula
   end
 
   def post_install
-    # Decompress Mach-O files hidden from keg_relocate
     system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
     Dir.glob(libexec/"deps/native/**/*.gz").each { |f| system "gunzip", f }
     system "chmod", "+x", libexec/"soulforge"
 
-    # Install directly in Ruby — install.sh fails under Homebrew's system()
-    # despite working perfectly when run manually (likely env/signal differences).
     sf = Pathname.new(Dir.home)/".soulforge"
     sf_bin = sf/"bin"
-
-    # Clean previous install (preserve config, sessions, DBs)
-    %w[bin installs wasm workers native opentui-assets init.lua].each do |d|
-      rm_rf sf/d
-    end
-
+    %w[bin installs wasm workers native opentui-assets init.lua].each { |d| rm_rf sf/d }
     sf_bin.mkpath
 
-    # Main binary + symlink
     cp libexec/"soulforge", sf_bin/"soulforge"
     chmod 0755, sf_bin/"soulforge"
     ln_sf sf_bin/"soulforge", sf_bin/"sf"
 
-    # CLI tools
     %w[rg fd lazygit cli-proxy-api].each do |tool|
       cp libexec/"deps"/tool, sf_bin/tool
       chmod 0755, sf_bin/tool
     end
 
-    # Neovim
     nvim_dir = sf/"installs"/"nvim-bundled"
     (sf/"installs").mkpath
     cp_r libexec/"deps"/"nvim", nvim_dir
     ln_sf nvim_dir/"bin"/"nvim", sf_bin/"nvim"
 
-    # Tree-sitter WASMs, workers, native addons, assets
     (sf/"wasm").mkpath
     (sf/"workers").mkpath
     cp Dir[libexec/"deps"/"wasm"/"*.wasm"], sf/"wasm"
@@ -99,23 +83,14 @@ class Soulforge < Formula
     cp_r libexec/"deps"/"opentui-assets", sf/"opentui-assets"
     cp libexec/"deps"/"init.lua", sf/"init.lua"
 
-    # Nerd fonts
-    font_dir = if OS.mac?
-      Pathname.new(Dir.home)/"Library"/"Fonts"
-    else
-      Pathname.new(Dir.home)/".local"/"share"/"fonts"
-    end
+    font_dir = OS.mac? ? Pathname.new(Dir.home)/"Library"/"Fonts" : Pathname.new(Dir.home)/".local"/"share"/"fonts"
     font_dir.mkpath
     Dir[libexec/"deps"/"nerd-fonts"/"*.ttf"].each { |f| cp f, font_dir rescue nil }
 
-    # Remove quarantine on macOS
     system "xattr", "-cr", sf if OS.mac?
 
-    # Ensure nerdFont config
     config = sf/"config.json"
-    unless config.exist?
-      config.write('{"nerdFont":true}')
-    end
+    config.write('{"nerdFont":true}') unless config.exist?
   end
 
   def caveats
