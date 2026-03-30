@@ -49,14 +49,10 @@ class Soulforge < Formula
     # first user-run avoids this — Terminal has the user's full permissions.
     (bin/"soulforge").write <<~SH
       #!/bin/bash
-      CELLAR="$(cd "$(dirname "$0")/../libexec" 2>/dev/null && pwd)"
       SF="$HOME/.soulforge/bin/soulforge"
       if [ ! -x "$SF" ]; then
         echo "Setting up SoulForge..." >&2
-        # Decompress if needed (first install or reinstall)
-        [ -f "$CELLAR/soulforge.gz" ] && gunzip "$CELLAR/soulforge.gz" && chmod +x "$CELLAR/soulforge"
-        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \\; 2>/dev/null
-        bash "$CELLAR/install.sh" --quiet
+        bash "#{libexec}/install.sh" --quiet
       fi
       exec "$SF" "$@"
     SH
