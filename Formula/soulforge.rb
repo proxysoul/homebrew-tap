@@ -4,35 +4,45 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.2.0"
+  version "1.3.0"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "4b9999f5daabc9a45f63088fd2baabeec07b4a3b62e4ca25b231484f9f8482a2"
+      sha256 "c6846cdb92b16e31193cd34afb4b3fb72dfbe6cb658b358ad7d2710c47e17cf8"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "45d8fdffcaa62f1a3bf142dcd501865157ff0bdf668d3f71c9a82593d73a57c2"
+      sha256 "43cd7421845bce1879d754850b1af0a9ab0f1fea535f5e0dd2bb6bfc67e18445"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "1f5967e6ad069111d55d64a9406b4e4ed213661d9de253a6ad06239123f27f79"
+      sha256 "04222cf271c5482552c12ff4cc004bf0ef92cc51a4f792e7aa38f7d74df157c7"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "63bb02a4b8176978ddc6d66d4eab621c9abc327521e11e348e4cd21f6885c028"
+      sha256 "b138c46138b3c63b16710d7e513648bf3986085a208fb9edba8790060d4c5bbf"
     end
   end
 
   def install
     system "./install.sh", "--quiet"
-    bin.install_symlink "#{Dir.home}/.soulforge/bin/soulforge"
-    bin.install_symlink "#{Dir.home}/.soulforge/bin/soulforge" => "sf"
+    # Create wrapper scripts instead of symlinks — symlinks to ~/.soulforge/
+    # fail because brew validates targets during link phase
+    (bin/"soulforge").write <<~SH
+      #!/bin/bash
+      exec "#{Dir.home}/.soulforge/bin/soulforge" ""
+    SH
+    (bin/"sf").write <<~SH
+      #!/bin/bash
+      exec "#{Dir.home}/.soulforge/bin/soulforge" ""
+    SH
+    chmod 0755, bin/"soulforge"
+    chmod 0755, bin/"sf"
   end
 
   def caveats
