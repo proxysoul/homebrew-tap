@@ -4,28 +4,28 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.5.1"
+  version "1.5.2"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "9af7022d17a49ded6df5375e6b3706fc2b9fc4f6bca3e2173809f2e262310dd1"
+      sha256 "e221e06353efb816e4d45ae1c3b45936c1e2e9ad3b603eb1998bd324c3b742e6"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "138ca1d5429f3cf3b98b9b683eb03a9e17faacdef38959607a23e9365e236603"
+      sha256 "38b672f162ee2e508f3dbaa288ac1aefc179096b62bcc7b952eb9dac91ec3e80"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "432d71bb3453f45d91f4b39c6ed8255701876bc74515e1340b01a9dfaa13fa39"
+      sha256 "124ecfb7544f9c3b109e1584052004c1bfad47530a15d4bf3f39cf402e7298d4"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "ba85dd2a38f2dc595db324dd46af02103966e27715a065810e5ff8830e303970"
+      sha256 "b0c6bcab764adedb1206ec10d4dee5d36c4d14d208c332ee4bc00e3a06a90815"
     end
   end
 
@@ -52,7 +52,7 @@ class Soulforge < Formula
       # post_install may have failed — decompress if still gzipped
       if [ -f "$CELLAR/soulforge.gz" ] && [ ! -f "$CELLAR/soulforge" ]; then
         gunzip "$CELLAR/soulforge.gz" 2>/dev/null || true
-        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \\; 2>/dev/null || true
+        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \; 2>/dev/null || true
         chmod +x "$CELLAR/soulforge" 2>/dev/null || true
       fi
 
