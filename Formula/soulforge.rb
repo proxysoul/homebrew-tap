@@ -4,28 +4,28 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "1.4.0"
+  version "1.5.0"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "6e3a18c5563e1b5d946578d28f7fb53711949428fb982acbb8c86f855fc60db7"
+      sha256 "f16fece9578dfbdaa4b8f3fd0b1af4b59534e4e4af4ed5526875cfbdf6709da7"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "64f78f137afac29b87f371990a28f68b92075e8a27abef4087fb27d02abd9787"
+      sha256 "9f62222caa5d463e7fef444e566343b30ac68f68cc7b9eb13657f5687f280ee7"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "9f2671f2150e3b297dc1820c99c2e47e8c00c3c69e2919c92eb771ab97095b36"
+      sha256 "d4328eed30aaa0911ebe48dddee0a6fb17d7f8d09b5d7da1407b75a13c97dec4"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-      sha256 "bc86fd9812b09e277843afbd77618a67275e48f3077732b370087e0840a0515f"
+      sha256 "cad45020045a7d13624f92a8f80eefc1f773d6409f4dae6a590a9c9ddb4ec25d"
     end
   end
 
@@ -47,7 +47,6 @@ class Soulforge < Formula
       #!/bin/bash
       SF="$HOME/.soulforge/bin/soulforge"
       CELLAR="#{libexec}"
-      # Run install if binary missing or cellar has a newer version (upgrade)
       if [ ! -x "$SF" ] || [ "$CELLAR/soulforge" -nt "$SF" ]; then
         echo "Setting up SoulForge..." >&2
         bash "$CELLAR/install.sh" --quiet
