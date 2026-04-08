@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.9.2"
+  version "2.9.3"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "1553ec14b5c04378e521a5a838cf24563be057a1dd77479ed5625d02a747dcaa"
+      sha256 "cc76c8005dd9a4a99c89c95437c5b0bf02a521e6f1931d21be2e5d00ef155206"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "57081edd3481b9df22bc4f6e176e8b8e7fc7e7014ff0d18b56b7d399af0f0cb4"
+      sha256 "1e7d2da782a90dac82442526ca81d66bf440b6130894388e33eca3c540384be0"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "8f06cf67c759ca9d129c612df042b86f5061d6efffb90097f1b0ab7897e76d40"
+      sha256 "f84ec2d96cedebfe1909a3ec9685863362a54b59bd7c07583dff5410bd53e974"
     end
     if Hardware::CPU.intel?
       # Use baseline build (no AVX) for pre-Sandy Bridge CPUs
       if 4.strip.to_i > 0
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "f19312a0990de521f12ef242e49a3edcc3e3cb0509e349d7a369e623daa6513d"
+        sha256 "a5e74cfe5035478644cb93de58060be108742b7d1419da8ae865908b422e14f1"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "db9f52683d85226e6fb14b621f80704c38176ebccd919e27e9df01d53693a2ed"
+        sha256 "73253ff4507ef085e332585cd697a13093855ead543230845a3c9f73d80d6ddb"
       end
     end
   end
