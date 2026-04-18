@@ -54,11 +54,12 @@ class Soulforge < Formula
       set -euo pipefail
       CELLAR="#{libexec}"
       SF="$HOME/.soulforge/bin/soulforge"
+      EXPECTED_VERSION="#{version}"
 
       # post_install may have failed — decompress if still gzipped
       if [ -f "$CELLAR/soulforge.gz" ] && [ ! -f "$CELLAR/soulforge" ]; then
         gunzip "$CELLAR/soulforge.gz" 2>/dev/null || true
-        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \; 2>/dev/null || true
+        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \\; 2>/dev/null || true
         chmod +x "$CELLAR/soulforge" 2>/dev/null || true
       fi
 
@@ -69,9 +70,21 @@ class Soulforge < Formula
         exit 1
       fi
 
-      # Run install.sh if missing or outdated
-      if [ ! -x "$SF" ] || [ "$CELLAR/soulforge" -nt "$SF" ]; then
-        echo "Setting up SoulForge..." >&2
+      # Run install.sh if missing or version-mismatched.
+      # Version comparison beats mtime: brew tarball mtimes predate the
+      # user-copied binary, so `-nt` wrongly skipped reinstalls on upgrade.
+      needs_install=0
+      if [ ! -x "$SF" ]; then
+        needs_install=1
+      else
+        installed_version="$("$SF" --version 2>/dev/null | awk '{print $NF}' || true)"
+        if [ "$installed_version" != "$EXPECTED_VERSION" ]; then
+          needs_install=1
+        fi
+      fi
+
+      if [ "$needs_install" = "1" ]; then
+        echo "Setting up SoulForge $EXPECTED_VERSION..." >&2
         if ! bash "$CELLAR/install.sh" --quiet; then
           echo "" >&2
           echo "Install failed. Run manually:" >&2
