@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.13.0"
+  version "2.13.1"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "f8a0e3cca36936edeb1f539ca08942541d045710a4d769c1fde34c69767580e0"
+      sha256 "5f950bcc95fddc8e98e4b0ed5a275cf21b290edb930a33cf9f80a58ccdb554c4"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "e8a9954e9acaacdf5ff7a554f6f792784a41ca88da168175d4fc06d91e49ecff"
+      sha256 "64e7d5353a309fb46ca02883695e0b4047d281ea02eaaba8afcace47100bb1cc"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "a116b0d040928cb9d83eece8af2a66ae26a9d92cf16809931753175c0eb439f8"
+      sha256 "85907a635fc8b4a6413f5e3f39ec42c8b9aba77c84d7000fb7ae9f6189f8b1dc"
     end
     if Hardware::CPU.intel?
       # Use baseline build (no AVX) for pre-Sandy Bridge CPUs
       if 4.strip.to_i > 0
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "d245c95c87699374d58545bef3a99cf48916f9cc3b18e35ed2834f2353cb48ad"
+        sha256 "730ea77e2eb204bba339c98b12fa54a701c66fc05f20c1cb2513949d5bfad977"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "6b91fe21fab3735a4eb824e1fcd4b689c23ff1382e676caf5856f3d9fa69b9e8"
+        sha256 "5aa74c3ab565ab5b8b530bf9fba14f10669d230f3269cacb6776b145b0991c8e"
       end
     end
   end
@@ -54,12 +54,11 @@ class Soulforge < Formula
       set -euo pipefail
       CELLAR="#{libexec}"
       SF="$HOME/.soulforge/bin/soulforge"
-      EXPECTED_VERSION="#{version}"
 
       # post_install may have failed — decompress if still gzipped
       if [ -f "$CELLAR/soulforge.gz" ] && [ ! -f "$CELLAR/soulforge" ]; then
         gunzip "$CELLAR/soulforge.gz" 2>/dev/null || true
-        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \\; 2>/dev/null || true
+        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \; 2>/dev/null || true
         chmod +x "$CELLAR/soulforge" 2>/dev/null || true
       fi
 
@@ -70,21 +69,9 @@ class Soulforge < Formula
         exit 1
       fi
 
-      # Run install.sh if missing or version-mismatched.
-      # Version comparison beats mtime: brew tarball mtimes predate the
-      # user-copied binary, so `-nt` wrongly skipped reinstalls on upgrade.
-      needs_install=0
-      if [ ! -x "$SF" ]; then
-        needs_install=1
-      else
-        installed_version="$("$SF" --version 2>/dev/null | awk '{print $NF}' || true)"
-        if [ "$installed_version" != "$EXPECTED_VERSION" ]; then
-          needs_install=1
-        fi
-      fi
-
-      if [ "$needs_install" = "1" ]; then
-        echo "Setting up SoulForge $EXPECTED_VERSION..." >&2
+      # Run install.sh if missing or outdated
+      if [ ! -x "$SF" ] || [ "$CELLAR/soulforge" -nt "$SF" ]; then
+        echo "Setting up SoulForge..." >&2
         if ! bash "$CELLAR/install.sh" --quiet; then
           echo "" >&2
           echo "Install failed. Run manually:" >&2
