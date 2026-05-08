@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.14.7"
+  version "2.14.8"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "f73432f96ed90e75422be9a01c1cea581382378ff0920be9fa49b779d2d9134e"
+      sha256 "d328a6a756e820c02982deb0445c0bb275650a5da36e36b5213347e008030d65"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "bf9f27399cf1523558fabff977ec3c63d0064df1c3c72c6c7b04bbd15390c5fb"
+      sha256 "db4184a42d1e4e9d217b621926fc8558abfc0e68d27b23fe899224cf0e49d262"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "349caf9281457ebcdb28b6648bf327823a1489fcad6eae066f23e12125c96c0f"
+      sha256 "078c9a3b33661da635600e80b4b62a4fad129b2d7534313e30f055c7737c5ac7"
     end
     if Hardware::CPU.intel?
-      # AVX detection: pre-Sandy Bridge CPUs need the baseline (SSE2-only) build.
-      if Hardware::CPU.flags.include?("avx")
+      # Use baseline build (no AVX) for pre-Sandy Bridge CPUs
+      if 4.strip.to_i > 0
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "857a64a342d1abbf4bf51f47f231dac33b4827ddb40680b7dfc57b21b84cfe11"
+        sha256 "b63dcc31141bcfdd3eb2ed722755de9969dbbc04958cdbc8bee73e2e36b7e7cc"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "19e411de6422065bce2af7a3d818aa09b7ee13dee248bf7d3ca9df5fbf341207"
+        sha256 "34c42e592a7e14dc45edad3d0f647022db6e40bcfabf10c13a2bebf31413a499"
       end
     end
   end
