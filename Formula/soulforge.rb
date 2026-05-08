@@ -24,8 +24,11 @@ class Soulforge < Formula
       sha256 "349caf9281457ebcdb28b6648bf327823a1489fcad6eae066f23e12125c96c0f"
     end
     if Hardware::CPU.intel?
-      # Use baseline build (no AVX) for pre-Sandy Bridge CPUs
-      if 4.strip.to_i > 0
+      # AVX detection: pre-Sandy Bridge CPUs need the baseline (SSE2-only) build.
+      # /proc/cpuinfo flags include "avx" on AVX-capable cores.
+      has_avx = File.exist?("/proc/cpuinfo") &&
+                File.read("/proc/cpuinfo").match?(/^flags\s*:.*\bavx\b/)
+      if has_avx
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
         sha256 "857a64a342d1abbf4bf51f47f231dac33b4827ddb40680b7dfc57b21b84cfe11"
       else
