@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.14.9"
+  version "2.14.10"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "e1de2411554642229c975046cffe4eef527c13648024bab2dfc3b376aa655562"
+      sha256 "e55aaaa927987098ae7e06e2b62d47fd170006f0d8d95b3a5fdf0a9ad3e6fcc8"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "d9e44ce6f1d11418abfe18fc6b7397dfe3d192e690598cc29875692bd8b397a8"
+      sha256 "7bd420290ec20590fc45544301dfa9de4e2ce31fae683726feb1e412dcd6f0aa"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "e3dcf1df54c930d268c4d3247a33674b84784aaab01912525c4e6fd1777cf018"
+      sha256 "5420254f5bfed4cb136c0bb6a6b6dcd8cec0da550712736745d8a193df4284b0"
     end
     if Hardware::CPU.intel?
-      # Use baseline build (no AVX) for pre-Sandy Bridge CPUs
-      if 4.strip.to_i > 0
+      # AVX detection: pre-Sandy Bridge CPUs need the baseline (SSE2-only) build.
+      if Hardware::CPU.flags.include?("avx")
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "7703589878bb37b211120f90f23dd2ebd678e780e808986fefad3a73f172efd2"
+        sha256 "4e9e723b06d9711c09fc19216b5e5eac33eba0752f14f72e86a898926da1148d"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "a88b470d18a331cf7071aa39dd482e96c05716ecf7f2a4e99919d002976f7376"
+        sha256 "3d74d310ea4a3bc60b6bb7ccfad05472d686d6befa5448218b3ba838e4d79eb4"
       end
     end
   end
