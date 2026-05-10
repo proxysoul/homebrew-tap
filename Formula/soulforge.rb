@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.14.10"
+  version "2.14.7"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "e55aaaa927987098ae7e06e2b62d47fd170006f0d8d95b3a5fdf0a9ad3e6fcc8"
+      sha256 "f73432f96ed90e75422be9a01c1cea581382378ff0920be9fa49b779d2d9134e"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "7bd420290ec20590fc45544301dfa9de4e2ce31fae683726feb1e412dcd6f0aa"
+      sha256 "bf9f27399cf1523558fabff977ec3c63d0064df1c3c72c6c7b04bbd15390c5fb"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "5420254f5bfed4cb136c0bb6a6b6dcd8cec0da550712736745d8a193df4284b0"
+      sha256 "349caf9281457ebcdb28b6648bf327823a1489fcad6eae066f23e12125c96c0f"
     end
     if Hardware::CPU.intel?
       # AVX detection: pre-Sandy Bridge CPUs need the baseline (SSE2-only) build.
       if Hardware::CPU.flags.include?("avx")
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "4e9e723b06d9711c09fc19216b5e5eac33eba0752f14f72e86a898926da1148d"
+        sha256 "857a64a342d1abbf4bf51f47f231dac33b4827ddb40680b7dfc57b21b84cfe11"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "3d74d310ea4a3bc60b6bb7ccfad05472d686d6befa5448218b3ba838e4d79eb4"
+        sha256 "19e411de6422065bce2af7a3d818aa09b7ee13dee248bf7d3ca9df5fbf341207"
       end
     end
   end
@@ -58,7 +58,7 @@ class Soulforge < Formula
       # post_install may have failed — decompress if still gzipped
       if [ -f "$CELLAR/soulforge.gz" ] && [ ! -f "$CELLAR/soulforge" ]; then
         gunzip "$CELLAR/soulforge.gz" 2>/dev/null || true
-        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} \; 2>/dev/null || true
+        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} + 2>/dev/null || true
         chmod +x "$CELLAR/soulforge" 2>/dev/null || true
       fi
 
