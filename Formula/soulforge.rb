@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.17.0"
+  version "2.18.0"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "2c11f734189c336c90b114d2be47b4820dfc3470a6e96e65b0ded14db89af4dc"
+      sha256 "d63377fefedbb1664143a64d001d300e920de5518ddb80a51ce8b8cac2334bfb"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "fdc2a896cab6fa2c51e5e1b0f69c4c7dbd15963acc87d1847a85603fb79726ac"
+      sha256 "e7ea726008baaeca9a02c66281190d3ffc01ea120d5c8c1e04c35eb2bf6311b2"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "b93fd2bdd3f70bbfc7679afe4d88f2641f47c552bde0cd80ba0aec898b49f692"
+      sha256 "e94b267b1a8a7404aa1731b8325db505b44963360d2699e1b14050970fdaf1ad"
     end
     if Hardware::CPU.intel?
       # AVX detection: pre-Sandy Bridge CPUs need the baseline (SSE2-only) build.
       if Hardware::CPU.flags.include?("avx")
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "e4b518b7064b2018e0dca49f9e9cc8b3ad4cd606db98542d886f938925459c05"
+        sha256 "38614d5380789cc25a19301fb18f7cc4e0fbda2b10ede20829375b6772c280a4"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "f1e99fb9794402a49941be7b0a91d59a2d1cd0492b27ed01a7a83a52039815ba"
+        sha256 "90d59f8fcdfcbead750375452b98a26bda65b3c8562b81cafc42b6df2aafda04"
       end
     end
   end
@@ -53,7 +53,10 @@ class Soulforge < Formula
       #!/bin/bash
       set -euo pipefail
       CELLAR="#{libexec}"
-      SF="$HOME/.soulforge/bin/soulforge"
+      SF_DIR="$HOME/.soulforge"
+      SF="$SF_DIR/bin/soulforge"
+      STAMP="$SF_DIR/.brew-version"
+      EXPECTED="#{version}"
 
       # post_install may have failed — decompress if still gzipped
       if [ -f "$CELLAR/soulforge.gz" ] && [ ! -f "$CELLAR/soulforge" ]; then
@@ -69,15 +72,21 @@ class Soulforge < Formula
         exit 1
       fi
 
-      # Run install.sh if missing or outdated
-      if [ ! -x "$SF" ] || [ "$CELLAR/soulforge" -nt "$SF" ]; then
-        echo "Setting up SoulForge..." >&2
+      # Run install.sh if missing or version stamp doesn't match the keg.
+      # Version stamp is authoritative — mtime checks are unreliable on
+      # brew upgrade (Homebrew preserves source mtimes).
+      INSTALLED=""
+      [ -r "$STAMP" ] && INSTALLED="$(cat "$STAMP" 2>/dev/null || true)"
+      if [ ! -x "$SF" ] || [ "$INSTALLED" != "$EXPECTED" ]; then
+        echo "Setting up SoulForge $EXPECTED..." >&2
         if ! bash "$CELLAR/install.sh" --quiet; then
           echo "" >&2
           echo "Install failed. Run manually:" >&2
           echo "  bash $CELLAR/install.sh" >&2
           exit 1
         fi
+        mkdir -p "$SF_DIR"
+        printf '%s\n' "$EXPECTED" > "$STAMP"
       fi
 
       exec "$SF" "$@"
@@ -95,6 +104,22 @@ class Soulforge < Formula
     system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
     Dir.glob(libexec/"deps/native/**/*.gz").each { |f| system "gunzip", f }
     system "chmod", "+x", libexec/"soulforge"
+  end
+
+  def uninstall_postflight
+    # brew uninstall removes the keg, but our first-run wrapper
+    # hydrated ~/.soulforge/{bin,wasm,workers,native,opentui-assets,init.lua}
+    # outside the prefix. Remove only what we own; preserve user data
+    # (config.json, history.db, memory.db, sessions, installs/, presets/).
+    sf = "#{Dir.home}/.soulforge"
+    %w[bin wasm workers native opentui-assets].each do |sub|
+      FileUtils.rm_rf("#{sf}/#{sub}")
+    end
+    %w[init.lua .brew-version].each do |f|
+      FileUtils.rm_f("#{sf}/#{f}")
+    end
+  rescue StandardError => e
+    opoo "Cleanup of ~/.soulforge failed: #{e.message}"
   end
 
   def caveats
