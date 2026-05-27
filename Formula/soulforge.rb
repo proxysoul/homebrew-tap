@@ -4,33 +4,33 @@
 class Soulforge < Formula
   desc "Graph-powered code intelligence"
   homepage "https://github.com/ProxySoul/soulforge"
-  version "2.18.0"
+  version "2.18.1"
   license "BUSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-arm64.tar.gz"
-      sha256 "d63377fefedbb1664143a64d001d300e920de5518ddb80a51ce8b8cac2334bfb"
+      sha256 "9a138144e89323b3b8f23093f1f77d0702d4b917f9c2cc258ea658caaba21ecd"
     end
     if Hardware::CPU.intel?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-darwin-x64.tar.gz"
-      sha256 "e7ea726008baaeca9a02c66281190d3ffc01ea120d5c8c1e04c35eb2bf6311b2"
+      sha256 "bb52c0c8de3511ffcb7f4feff78a25520ace25791f6b5a2f5c963531ef8aa3b6"
     end
   end
 
   on_linux do
     if Hardware::CPU.arm? && Hardware::CPU.is_64_bit?
       url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-arm64.tar.gz"
-      sha256 "e94b267b1a8a7404aa1731b8325db505b44963360d2699e1b14050970fdaf1ad"
+      sha256 "b10acbb3f63e2b06d7184147724da8c7d5aa2ad4eef2fbb8abe141d99eee0dfb"
     end
     if Hardware::CPU.intel?
       # AVX detection: pre-Sandy Bridge CPUs need the baseline (SSE2-only) build.
       if Hardware::CPU.flags.include?("avx")
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64.tar.gz"
-        sha256 "38614d5380789cc25a19301fb18f7cc4e0fbda2b10ede20829375b6772c280a4"
+        sha256 "ab080a99dfae328b0a3c9175fa9d15cd04571a17b249bb3c929967f66ca6dece"
       else
         url "https://github.com/ProxySoul/soulforge/releases/download/v#{version}/soulforge-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "90d59f8fcdfcbead750375452b98a26bda65b3c8562b81cafc42b6df2aafda04"
+        sha256 "53b9859354f7d24222444cd1e2df3d80fa4ce9301f89ed080e0f4e40a7774db2"
       end
     end
   end
@@ -40,8 +40,10 @@ class Soulforge < Formula
 
     # Gzip ALL Mach-O files so Homebrew's keg_relocate can't detect them.
     # It scans by magic bytes, not extension — renaming alone doesn't work.
+    # Covers deps/native (intentional bundled binaries) AND deps/workers
+    # (Bun may emit hash-named .node chunks during worker bundling).
     system "gzip", libexec/"soulforge"
-    Dir.glob(libexec/"deps/native/**/*.{node,dylib,so}").each do |f|
+    Dir.glob(libexec/"deps/**/*.{node,dylib,so}").each do |f|
       system "gzip", f
     end
 
@@ -61,7 +63,7 @@ class Soulforge < Formula
       # post_install may have failed — decompress if still gzipped
       if [ -f "$CELLAR/soulforge.gz" ] && [ ! -f "$CELLAR/soulforge" ]; then
         gunzip "$CELLAR/soulforge.gz" 2>/dev/null || true
-        find "$CELLAR/deps/native" -name "*.gz" -exec gunzip {} + 2>/dev/null || true
+        find "$CELLAR/deps" -name "*.gz" -exec gunzip {} + 2>/dev/null || true
         chmod +x "$CELLAR/soulforge" 2>/dev/null || true
       fi
 
@@ -102,7 +104,7 @@ class Soulforge < Formula
   def post_install
     # Decompress — if this fails, the wrapper handles it on first run
     system "gunzip", libexec/"soulforge.gz" if File.exist?(libexec/"soulforge.gz")
-    Dir.glob(libexec/"deps/native/**/*.gz").each { |f| system "gunzip", f }
+    Dir.glob(libexec/"deps/**/*.gz").each { |f| system "gunzip", f }
     system "chmod", "+x", libexec/"soulforge"
   end
 
