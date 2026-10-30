@@ -4,13 +4,6 @@ class Empryo < Formula
   version "3.12.1-beta"
   license "BUSL-1.1"
 
-  livecheck do
-    url "https://empryo.com/latest.json"
-    strategy :json do |json|
-      json["version"]
-    end
-  end
-
   on_macos do
     on_arm do
       url "https://dl.empryo.com/v#{version}/empryo-#{version}-darwin-arm64.tar.gz"
