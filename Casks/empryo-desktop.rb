@@ -1,9 +1,9 @@
 cask "empryo-desktop" do
   arch arm: "arm64", intel: "x64"
 
-  version "3.12.5-beta"
-  sha256 arm:   "54669cf25c51419084d560beea3e04ff1361a6ad1f9eadd0ffe287e86398f61f",
-         intel: "a461ba4f05d82253398b8ed15ba3b2fd4e093fac8c3393fa0a0c075a6cfeb694"
+  version "3.12.6-beta"
+  sha256 arm:   "2c77c1e17e6d8920e232480dc586fc72f3d5bf10e08cc5cde3adae0f3a2b52e6",
+         intel: "bdb5eedc12e1b51e1bad986ae3275f201fcb089d8ffdafb74622e6d221ed3506"
 
   url "https://dl.empryo.com/v#{version}/Empryo-#{version}-mac-#{arch}.dmg"
   name "Empryo"
