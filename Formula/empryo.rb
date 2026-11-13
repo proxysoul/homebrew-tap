@@ -1,32 +1,32 @@
 class Empryo < Formula
   desc "Multi-agent coding assistant with codebase-aware AI"
   homepage "https://empryo.com/"
-  version "3.12.7-beta"
+  version "3.12.8-beta"
   license "BUSL-1.1"
 
   on_macos do
     on_arm do
       url "https://dl.empryo.com/v#{version}/empryo-#{version}-darwin-arm64.tar.gz"
-      sha256 "4816a7fa6118220b5e532ca92db883f6a31136ec2773a2d70000c8a07a8ad32b"
+      sha256 "afb5dda01687e00a71b46f27fc096e70a07b6b77f04fc21df403cf372404b4ce"
     end
     on_intel do
       url "https://dl.empryo.com/v#{version}/empryo-#{version}-darwin-x64.tar.gz"
-      sha256 "2c0882d917469c389f7f654543e600fe7d76c0d3d2eddeb4de25e9d7f811c40d"
+      sha256 "616cc4a37bf9d811218c62bc4c90d732605136e96a5987e69d80128c2ad62de6"
     end
   end
 
   on_linux do
     on_arm do
       url "https://dl.empryo.com/v#{version}/empryo-#{version}-linux-arm64.tar.gz"
-      sha256 "e2a44fa009441ff4cefb0ef6d48d969d1f580da8e0af534552e10cf5406d0faf"
+      sha256 "db9054f4f8ad0325a50ddc921204ea7cf1556f843adabb90c60474b2de40df91"
     end
     on_intel do
       if Hardware::CPU.avx2?
         url "https://dl.empryo.com/v#{version}/empryo-#{version}-linux-x64.tar.gz"
-        sha256 "eb929fc2006732b5747e6c115fe961ccbc87dee571a211988d362eb162ce2911"
+        sha256 "f9b95754cdf9170f1ef28511cc854c801c96954153821f1479c8c7433d413cb4"
       else
         url "https://dl.empryo.com/v#{version}/empryo-#{version}-linux-x64-baseline.tar.gz"
-        sha256 "73709cd6d25cc1af4eaddc0208a9c0b6451cffb793643a698b49d946fa42c4ff"
+        sha256 "6958364896c00f88ade81470432487fc0942339c7d9102279d45a700424faf00"
       end
     end
   end
